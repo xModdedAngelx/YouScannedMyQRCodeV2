@@ -17,6 +17,9 @@ export class AppComponent {
   userFingerprint: string | undefined;
   userUnique: boolean | undefined
   roughLocation: string | undefined;
+  hasAccessToBrowserLocation: boolean | undefined
+
+
 
   timeOfScan: string | undefined;
   userPlatform: string | undefined;
@@ -44,27 +47,82 @@ export class AppComponent {
         })
       })
     })
-
   }
 
-  writeFirstTimeUserLog(firestore: AngularFirestore, ip:any) {
+  writeFirstTimeUserLog(firestore: AngularFirestore, ip: any) {
     this.getRoughLocation(ip).then(roughLocation => {
       this.getCurrentTime().then(currentTime => {
-        firestore.collection('scan-logs').doc(this.userFingerprint).set({
-          name: this.generateAnonymousUserName(),
-          location: roughLocation,
-          timestamp: currentTime,
-          fingerprint: this.userFingerprint,
-          roughLocation: true
+        this.checkIfAppHasBrowserLocationAccess().then(hasBrowserLocationAccess => {
+          console.log("browser location access: " + hasBrowserLocationAccess)
+          if (hasBrowserLocationAccess) {
+            this.getBrowserLocation().then(exactAddress=>{
+              firestore.collection('scan-logs').doc(this.userFingerprint).set({
+                name: this.generateAnonymousUserName(),
+                location: exactAddress,
+                timestamp: currentTime,
+                fingerprint: this.userFingerprint,
+                exactLocation: hasBrowserLocationAccess
+              })
+            })
+          }
+          else {
+            firestore.collection('scan-logs').doc(this.userFingerprint).set({
+              name: this.generateAnonymousUserName(),
+              location: roughLocation,
+              timestamp: currentTime,
+              fingerprint: this.userFingerprint,
+              exactLocation: hasBrowserLocationAccess
+            })
+          }
         })
       })
     })
+  }
 
+  checkIfAppHasBrowserLocationAccess() {
+    return new Promise(resolve => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            this.hasAccessToBrowserLocation = true;
+            resolve(true)
+          },
+          (error) => {
+            this.hasAccessToBrowserLocation = false;
+            resolve(false)
+          }
+        );
+      } else {
+        this.hasAccessToBrowserLocation = false;
+        resolve(false)
+      }
+    })
+  }
+
+
+  getBrowserLocation(){
+    return new Promise(resolve => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+          let latitude = position.coords.latitude;
+          let longitude = position.coords.longitude;
+  
+          fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`)
+          .then(response => response.json())
+          .then(data => {
+            const address = data.address.road + ", " + data.address.town + ", " + data.address.state;
+            resolve(address)
+          })
+        });
+      } else {
+        console.error('Geolocation is not supported by this browser.');
+      }
+    })
   }
 
   getRoughLocation(ip: string) {
     return new Promise(resolve => {
-      fetch("https://api.ipgeolocation.io/ipgeo?apiKey=14a56634cf264cc6b289b2f8f07297b7&ip="+ip)
+      fetch("https://api.ipgeolocation.io/ipgeo?apiKey=14a56634cf264cc6b289b2f8f07297b7&ip=" + ip)
         .then(response => response.json())
         .then(data => {
           const city = data.city;
