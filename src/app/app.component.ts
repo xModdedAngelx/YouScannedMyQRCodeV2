@@ -10,121 +10,159 @@ import { AngularFirestore } from '@angular/fire/compat/firestore';
 })
 export class AppComponent {
   items: Observable<any[]> | undefined;
-  entireLog:any
-  displayedColumns = ["ip", "location", "dateOfScan"]
-  
-  usersIP:string | undefined;
-  userslatitude: number | undefined;
-  userslongitude: number | undefined;
-  usersCity:string | undefined;
-  usersState:string | undefined;
-  timeOfScan:string | undefined;
-  userPlatform:string | undefined;
-  userAgent:string | undefined;
-  userColorDepth:string | undefined;
-  userHardwareConcurrency:string | undefined
+  entireLog: any
+  displayedColumns = ["name", "location", "timestamp"]
+
+  usersIP: string | undefined;
+  userFingerprint: string | undefined;
+  userUnique: boolean | undefined
+  roughLocation: string | undefined;
+
+  timeOfScan: string | undefined;
+  userPlatform: string | undefined;
+  userAgent: string | undefined;
+  userColorDepth: string | undefined;
+  userHardwareConcurrency: string | undefined
   totalNumberOfScans = -1
 
   constructor(private http: HttpClient, firestore: AngularFirestore) {
-    this.getUserIP()
-    this.getCurrentLocation()
-    this.getCurrentTime()
-    this.getUserAgent()
-    this.getUserPlatform()
-
     this.items = firestore.collection('scan-logs').valueChanges();
 
     this.items.subscribe(data => {
-      console.log(data)
       this.entireLog = data
       this.totalNumberOfScans = data.length
     })
 
-    let yourFingerprint = this.generateFingerPrint()
-    
-    setTimeout(()=>{
-      firestore.collection('scan-logs').doc(yourFingerprint).set({
-        ip: this.usersIP,
-        location: this.usersCity,
-        dateOfScan: this.timeOfScan,
+    this.getScanLogs(firestore).then(logs => {
+      this.getUserIP().then(ip => {
+        this.generateFingerPrint().then(fingerprint => {
+          this.determineIfUniqueUser().then(isUnique => {
+            if (isUnique) {
+              this.writeFirstTimeUserLog(firestore, ip)
+            }
+          })
+        })
       })
-    },1000)
+    })
 
   }
 
-  generateFingerPrint(){
+  writeFirstTimeUserLog(firestore: AngularFirestore, ip:any) {
+    this.getRoughLocation(ip).then(roughLocation => {
+      this.getCurrentTime().then(currentTime => {
+        firestore.collection('scan-logs').doc(this.userFingerprint).set({
+          name: this.generateAnonymousUserName(),
+          location: roughLocation,
+          timestamp: currentTime,
+          fingerprint: this.userFingerprint,
+          roughLocation: true
+        })
+      })
+    })
+
+  }
+
+  getRoughLocation(ip: string) {
+    return new Promise(resolve => {
+      fetch("https://api.ipgeolocation.io/ipgeo?apiKey=14a56634cf264cc6b289b2f8f07297b7&ip="+ip)
+        .then(response => response.json())
+        .then(data => {
+          const city = data.city;
+          const region = data.state_prov;
+          this.roughLocation = city + ", " + region
+          resolve(city + ", " + region);
+        })
+        .catch(error => console.error(error));
+    })
+  }
+
+  getScanLogs(firestore: AngularFirestore) {
+    return new Promise((resolve) => {
+      this.items = firestore.collection('scan-logs').valueChanges();
+      this.items.subscribe(data => {
+        this.entireLog = data
+        this.totalNumberOfScans = data.length
+        resolve(data)
+      })
+    })
+  }
+
+  generateFingerPrint() {
+    return new Promise((resolve) => {
       var screenPrint = screen.width + "x" + screen.height;
-      var colorDepth = this.getUserColorDepth()
-      var userAgent = this.getUserAgent()
-      var ip = this.getUserIP()
-      var platform = this.getUserPlatform()
-      var userHardwareConcurrency = this.getUserHardwareConcurrency()
-      let fingerPrint = btoa(screenPrint + colorDepth + userAgent + ip + platform) + userHardwareConcurrency;
-      console.log("Your finger print is: " + fingerPrint)
-      return fingerPrint;
-    
-  
+      var colorDepth = this.getUserColorDepth();
+      var userAgent = this.getUserAgent();
+      var platform = this.getUserPlatform();
+      var userHardwareConcurrency = this.getUserHardwareConcurrency();
+      let fingerPrint = btoa(screenPrint + colorDepth + userAgent + this.usersIP + platform) +
+        userHardwareConcurrency;
+      console.log("Your finger print is: " + fingerPrint);
+      this.userFingerprint = fingerPrint
+      resolve(fingerPrint);
+    });
   }
 
 
-  getUserHardwareConcurrency(){
+  determineIfUniqueUser() {
+    return new Promise((resolve) => {
+      for (let element of this.entireLog) {
+        if (element.fingerprint == this.userFingerprint) {
+          console.log("User is not unique")
+          this.userUnique = false
+          resolve(false)
+          return
+        }
+      }
+      console.log("User is unique")
+      this.userUnique = true
+      resolve(true)
+      return
+    })
+
+  }
+
+  generateAnonymousUserName() {
+    return "Anonymous" + Math.floor(Math.random() * 100000);
+  }
+
+  getUserHardwareConcurrency() {
     this.userHardwareConcurrency = navigator.hardwareConcurrency.toString()
     console.log(this.userHardwareConcurrency)
     return navigator.hardwareConcurrency.toString()
   }
 
-  getUserColorDepth(){
+  getUserColorDepth() {
     this.userColorDepth = screen.colorDepth.toString()
     return screen.colorDepth
   }
 
-  getUserAgent(){
+  getUserAgent() {
     this.userAgent = navigator.userAgent
     return navigator.userAgent
   }
 
-  getUserPlatform(){
+  getUserPlatform() {
     this.userPlatform = navigator.platform
     return navigator.platform
   }
 
   getUserIP() {
-    this.http.get('https://api.ipify.org', { responseType: 'text' })
-      .subscribe((ip) => {
-        this.usersIP = ip;
-        return ip
-      });
-  }
-
-  getCurrentLocation(){
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(position => {
-        this.userslatitude = position.coords.latitude;
-        this.userslongitude = position.coords.longitude;
-        this.getApproximateLocation();
-      });
-    } else {
-      console.error('Geolocation is not supported by this browser.');
-    }
-  }
-
-  getApproximateLocation(){
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${this.userslatitude}&lon=${this.userslongitude}`)
-    .then(response => response.json())
-    .then(data => {
-      const address = data.address.road + ", " + data.address.town + ", " + data.address.state + ", " + data.address.country;
-      console.log(`Address: ${address}`);
-      this.usersState = data.address.state
-      this.usersCity = data.address.town
+    return new Promise((resolve) => {
+      this.http.get('https://api.ipify.org', { responseType: 'text' })
+        .subscribe((ip) => {
+          this.usersIP = ip;
+          resolve(ip)
+        });
     })
-    .catch(error => console.error(error));
   }
 
   getCurrentTime() {
-    let now = new Date();
-    this.timeOfScan = now.toLocaleString();
-    console.log(this.timeOfScan)
-  }
+    return new Promise(resolve => {
+      let now = new Date();
+      this.timeOfScan = now.toLocaleString();
+      resolve(now.toLocaleString())
+    })
 
+  }
 
 }
