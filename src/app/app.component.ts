@@ -10,7 +10,8 @@ import { AngularFirestore } from '@angular/fire/compat/firestore';
 })
 export class AppComponent {
   items: Observable<any[]> | undefined;
-
+  entireLog:any
+  displayedColumns = ["ip", "location", "dateOfScan"]
   
   usersIP:string | undefined;
   userslatitude: number | undefined;
@@ -19,17 +20,25 @@ export class AppComponent {
   usersState:string | undefined;
   timeOfScan:string | undefined;
 
+  totalNumberOfScans = -1
+
   constructor(private http: HttpClient, firestore: AngularFirestore) {
     this.getUserIP()
     this.getCurrentLocation()
     this.getCurrentTime()
 
 
-    firestore.collection('scan-logs').get().subscribe(response => {
-      console.log(response)
-    });
-    console.log("*****")
-    console.log(this.items)
+    this.items = firestore.collection('scan-logs').valueChanges();
+
+    this.items.subscribe(data => {
+      console.log(data)
+      this.entireLog = data
+      this.totalNumberOfScans = data.length
+    })
+  }
+
+  writeDataToDatabase(){
+    
   }
 
   getUserIP() {
