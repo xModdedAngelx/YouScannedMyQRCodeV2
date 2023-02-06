@@ -19,14 +19,18 @@ export class AppComponent {
   usersCity:string | undefined;
   usersState:string | undefined;
   timeOfScan:string | undefined;
-
+  userPlatform:string | undefined;
+  userAgent:string | undefined;
+  userColorDepth:string | undefined;
+  userHardwareConcurrency:string | undefined
   totalNumberOfScans = -1
 
   constructor(private http: HttpClient, firestore: AngularFirestore) {
     this.getUserIP()
     this.getCurrentLocation()
     this.getCurrentTime()
-
+    this.getUserAgent()
+    this.getUserPlatform()
 
     this.items = firestore.collection('scan-logs').valueChanges();
 
@@ -35,17 +39,60 @@ export class AppComponent {
       this.entireLog = data
       this.totalNumberOfScans = data.length
     })
+
+    let yourFingerprint = this.generateFingerPrint()
+    
+    setTimeout(()=>{
+      firestore.collection('scan-logs').doc(Math.random().toString(36).substring(2,12)).set({
+        ip: this.usersIP,
+        location: this.usersCity,
+        dateOfScan: this.timeOfScan,
+      })
+    },1000)
+
   }
 
-  writeDataToDatabase(){
+  generateFingerPrint(){
+      var screenPrint = screen.width + "x" + screen.height;
+      var colorDepth = this.getUserColorDepth()
+      var userAgent = this.getUserAgent()
+      var ip = this.getUserIP()
+      var platform = this.getUserPlatform()
+      var userHardwareConcurrency = this.getUserHardwareConcurrency()
+      let fingerPrint = btoa(screenPrint + colorDepth + userAgent + ip + platform) + userHardwareConcurrency;
+      console.log("Your finger print is: " + fingerPrint)
+      return fingerPrint;
     
+  
+  }
+
+
+  getUserHardwareConcurrency(){
+    this.userHardwareConcurrency = navigator.hardwareConcurrency.toString()
+    console.log(this.userHardwareConcurrency)
+    return navigator.hardwareConcurrency.toString()
+  }
+
+  getUserColorDepth(){
+    this.userColorDepth = screen.colorDepth.toString()
+    return screen.colorDepth
+  }
+
+  getUserAgent(){
+    this.userAgent = navigator.userAgent
+    return navigator.userAgent
+  }
+
+  getUserPlatform(){
+    this.userPlatform = navigator.platform
+    return navigator.platform
   }
 
   getUserIP() {
     this.http.get('https://api.ipify.org', { responseType: 'text' })
       .subscribe((ip) => {
         this.usersIP = ip;
-        console.log(ip);
+        return ip
       });
   }
 

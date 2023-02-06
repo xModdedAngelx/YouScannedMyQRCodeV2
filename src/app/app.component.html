@@ -13,7 +13,7 @@
   </div>
   
   <div class="center-text padding-between-elements">
-      Your location
+      Your (approximate) location
   </div>
   
   <div class="center-text">
@@ -33,13 +33,8 @@
   </div>
   
   <div class="center-text padding-between-elements">
-      Who Else Scanned This QR Code?
+      This QR Code Was Scanned {{totalNumberOfScans}} Times!
   </div>
-
-  <div class="center-text">
-    {{totalNumberOfScans}} Total Scans!
-</div>
-
 
   <table mat-table [dataSource]="entireLog" class="mat-elevation-z8 center-text padding-between-elements">
   
