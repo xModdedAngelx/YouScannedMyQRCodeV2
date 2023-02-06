@@ -43,7 +43,7 @@ export class AppComponent {
     let yourFingerprint = this.generateFingerPrint()
     
     setTimeout(()=>{
-      firestore.collection('scan-logs').doc(Math.random().toString(36).substring(2,12)).set({
+      firestore.collection('scan-logs').doc(yourFingerprint).set({
         ip: this.usersIP,
         location: this.usersCity,
         dateOfScan: this.timeOfScan,
