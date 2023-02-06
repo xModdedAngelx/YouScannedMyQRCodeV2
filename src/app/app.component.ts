@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-
+import { Observable } from 'rxjs';
+import { AngularFirestore } from '@angular/fire/compat/firestore';
 
 @Component({
   selector: 'app-root',
@@ -8,7 +9,9 @@ import { HttpClient } from '@angular/common/http';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  title = 'test'
+  items: Observable<any[]> | undefined;
+
+  
   usersIP:string | undefined;
   userslatitude: number | undefined;
   userslongitude: number | undefined;
@@ -16,10 +19,17 @@ export class AppComponent {
   usersState:string | undefined;
   timeOfScan:string | undefined;
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, firestore: AngularFirestore) {
     this.getUserIP()
     this.getCurrentLocation()
     this.getCurrentTime()
+
+
+    firestore.collection('scan-logs').get().subscribe(response => {
+      console.log(response)
+    });
+    console.log("*****")
+    console.log(this.items)
   }
 
   getUserIP() {
