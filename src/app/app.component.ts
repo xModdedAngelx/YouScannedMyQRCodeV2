@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
-
+import {MatSnackBar} from '@angular/material/snack-bar';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -34,7 +34,7 @@ export class AppComponent {
   userHardwareConcurrency: string | undefined
   totalNumberOfScans: number | undefined
 
-  constructor(private http: HttpClient, private firestore: AngularFirestore) {
+  constructor(private http: HttpClient, private firestore: AngularFirestore, private _snackBar: MatSnackBar) {
     this.items = firestore.collection('scan-logs').valueChanges();
 
     this.items.subscribe(data => {
@@ -55,6 +55,12 @@ export class AppComponent {
         })
       })
     })
+  }
+
+  showMessageSnackbar(message:string) {
+    this._snackBar.open(message, 'Close', {
+      
+    });
   }
 
   submitNameChange(){
