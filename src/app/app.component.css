@@ -15,3 +15,10 @@
 .bigger-textfield{
     width: 100%;
 }
+
+.clickable-font{
+    text-decoration: underline;
+    font-style: italic;
+    color: #3366CC ;
+    cursor:pointer;
+}
