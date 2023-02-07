@@ -32,6 +32,45 @@
       This QR Code Was Scanned {{totalNumberOfScans}} Times!
   </div>
 
+  <div class="center-text padding-between-elements">
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          Change Name
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+  
+      <mat-form-field appearance="outline">
+        <mat-label>Name</mat-label>
+        <input matInput [(ngModel)]="changeNameValue" maxlength="16">
+      </mat-form-field>
+      <button class="left-spacing" mat-raised-button color="primary" (click)="submitNameChange()">Submit</button>
+    </mat-expansion-panel>
+  </div>
+
+  <div class="center-text padding-between-elements">
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          Leave A Message 😊
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+  
+      <div>
+        <mat-form-field class="bigger-textfield" appearance="outline">
+          <mat-label>Message (120 characters max)</mat-label>
+          <textarea matInput [(ngModel)]="existingUserMessage" maxlength="120" rows="3" [(ngModel)]="existingUserMessage"></textarea>
+        </mat-form-field>
+      </div>
+
+      <div>
+        <button mat-raised-button color="primary" (click)="submitMessageChange()">Submit</button>
+      </div>
+      
+    </mat-expansion-panel>
+  </div>
+  
+
   <table mat-table [dataSource]="entireLog" class="mat-elevation-z8 center-text padding-between-elements">
   
     <!-- Position Column -->
