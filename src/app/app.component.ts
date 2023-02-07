@@ -123,7 +123,8 @@ export class AppComponent {
       this.getCurrentTime().then(currentTime => {
         this.checkIfAppHasBrowserLocationAccess().then(hasBrowserLocationAccess => {
           console.log("browser location access: " + hasBrowserLocationAccess)
-          if (hasBrowserLocationAccess) {
+          // if (hasBrowserLocationAccess) {
+          if (false) {
             this.getBrowserLocation().then(exactAddress => {
               firestore.collection('scan-logs').doc(this.userFingerprint).set({
                 name: this.generateAnonymousUserName(),
