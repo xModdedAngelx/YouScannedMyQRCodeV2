@@ -39,6 +39,7 @@ export class AppComponent {
 
     this.items.subscribe(data => {
       this.entireLog = data
+      console
       this.totalNumberOfScans = data.length
     })
 
@@ -93,12 +94,14 @@ export class AppComponent {
     data.subscribe((output:any) => {
       console.log(output)
       this.changeNameValue = output.name
+      this.displayedLocation = output.location
+      
       this.existingUserExactLocation = output.exactLocation
       this.existingUserlocation = output.location
       this.existingUserName = output.name
       this.existingUserTimestamp = output.timestamp
       this.existingUserMessage = output.message
-    });
+    }); 
   }
 
   writeFirstTimeUserLog(firestore: AngularFirestore, ip: any) {
