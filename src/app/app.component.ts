@@ -39,8 +39,8 @@ export class AppComponent {
 
     this.items.subscribe(data => {
       this.entireLog = data
-      console
       this.totalNumberOfScans = data.length
+      this.reorderDataByDate()
     })
 
     this.getScanLogs(firestore).then(logs => {
@@ -58,9 +58,17 @@ export class AppComponent {
     })
   }
 
+  reorderDataByDate(){
+    this.entireLog = this.entireLog.sort((a: { timestamp: string | number | Date; }, b: { timestamp: string | number | Date; }) => {
+      const aTimestamp = new Date(a.timestamp);
+      const bTimestamp = new Date(b.timestamp);
+      return bTimestamp.getTime() - aTimestamp.getTime();
+    });
+    this.entireLog = [...this.entireLog]
+  }
+
   showMessageSnackbar(message:string) {
     this._snackBar.open(message, 'Close', {
-      
     });
   }
 
@@ -101,6 +109,7 @@ export class AppComponent {
       this.existingUserName = output.name
       this.existingUserTimestamp = output.timestamp
       this.existingUserMessage = output.message
+      this.reorderDataByDate()
     }); 
   }
 
@@ -134,6 +143,9 @@ export class AppComponent {
         })
       })
     })
+    setTimeout(()=>{
+      this.reorderDataByDate()
+    },1500)
   }
 
   checkIfAppHasBrowserLocationAccess() {
