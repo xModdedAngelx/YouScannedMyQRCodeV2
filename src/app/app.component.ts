@@ -18,15 +18,14 @@ export class AppComponent {
   userUnique: boolean | undefined
   roughLocation: string | undefined;
   hasAccessToBrowserLocation: boolean | undefined
-
-
+  displayedLocation: string | undefined;
 
   timeOfScan: string | undefined;
   userPlatform: string | undefined;
   userAgent: string | undefined;
   userColorDepth: string | undefined;
   userHardwareConcurrency: string | undefined
-  totalNumberOfScans = -1
+  totalNumberOfScans: number | undefined
 
   constructor(private http: HttpClient, firestore: AngularFirestore) {
     this.items = firestore.collection('scan-logs').valueChanges();
@@ -111,6 +110,7 @@ export class AppComponent {
           .then(response => response.json())
           .then(data => {
             const address = data.address.road + ", " + data.address.town + ", " + data.address.state;
+            this.displayedLocation = address
             resolve(address)
           })
         });
@@ -128,6 +128,7 @@ export class AppComponent {
           const city = data.city;
           const region = data.state_prov;
           this.roughLocation = city + ", " + region
+          this.displayedLocation = this.roughLocation
           resolve(city + ", " + region);
         })
         .catch(error => console.error(error));

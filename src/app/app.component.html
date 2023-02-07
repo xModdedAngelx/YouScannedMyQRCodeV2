@@ -17,11 +17,7 @@
   </div>
   
   <div class="center-text">
-      <!-- {{userslatitude}}, {{userslongitude}}  -->
-  </div>
-
-  <div class="center-text">
-      <!-- {{usersCity}}, {{usersState}} -->
+      {{displayedLocation}}
   </div>
   
   <div class="center-text padding-between-elements">
@@ -33,7 +29,7 @@
   </div>
   
   <div class="center-text padding-between-elements">
-      This QR Code Was Scanned  Times!
+      This QR Code Was Scanned {{totalNumberOfScans}} Times!
   </div>
 
   <table mat-table [dataSource]="entireLog" class="mat-elevation-z8 center-text padding-between-elements">
