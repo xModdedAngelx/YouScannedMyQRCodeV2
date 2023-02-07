@@ -27,6 +27,7 @@ export class AppComponent {
   existingUserTimestamp: string | undefined;
   existingUserMessage: string | undefined;
 
+  loading = true
   timeOfScan: string | undefined;
   userPlatform: string | undefined;
   userAgent: string | undefined;
@@ -73,6 +74,9 @@ export class AppComponent {
   }
 
   submitNameChange(){
+    if(this.changeNameValue == ''){
+      this.changeNameValue = this.generateAnonymousUserName()
+    }
     this.firestore.collection('scan-logs').doc(this.userFingerprint).set({
       name: this.changeNameValue,
       location: this.existingUserlocation,
@@ -110,6 +114,7 @@ export class AppComponent {
       this.existingUserTimestamp = output.timestamp
       this.existingUserMessage = output.message
       this.reorderDataByDate()
+      this.loading=false
     }); 
   }
 
@@ -145,6 +150,7 @@ export class AppComponent {
     })
     setTimeout(()=>{
       this.reorderDataByDate()
+      this.loading=false
     },1500)
   }
 

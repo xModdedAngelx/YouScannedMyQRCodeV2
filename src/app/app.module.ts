@@ -25,6 +25,7 @@ import {MatButtonModule} from '@angular/material/button';
 import {MatIconModule} from '@angular/material/icon';
 import {MatSnackBarModule} from '@angular/material/snack-bar';
 import {MatSortModule} from '@angular/material/sort';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 
 
 @NgModule({
@@ -53,7 +54,8 @@ import {MatSortModule} from '@angular/material/sort';
     MatButtonModule,
     MatIconModule,
     MatSnackBarModule,
-    MatSortModule
+    MatSortModule,
+    MatProgressSpinnerModule,
 
   ],
   providers: [],
