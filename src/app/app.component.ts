@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
@@ -19,6 +19,13 @@ export class AppComponent {
   roughLocation: string | undefined;
   hasAccessToBrowserLocation: boolean | undefined
   displayedLocation: string | undefined;
+  changeNameValue = "";
+  
+  existingUserExactLocation: string | undefined;
+  existingUserlocation: string | undefined;
+  existingUserName: string | undefined;
+  existingUserTimestamp: string | undefined;
+  existingUserMessage: string | undefined;
 
   timeOfScan: string | undefined;
   userPlatform: string | undefined;
@@ -27,7 +34,7 @@ export class AppComponent {
   userHardwareConcurrency: string | undefined
   totalNumberOfScans: number | undefined
 
-  constructor(private http: HttpClient, firestore: AngularFirestore) {
+  constructor(private http: HttpClient, private firestore: AngularFirestore) {
     this.items = firestore.collection('scan-logs').valueChanges();
 
     this.items.subscribe(data => {
@@ -42,10 +49,50 @@ export class AppComponent {
             if (isUnique) {
               this.writeFirstTimeUserLog(firestore, ip)
             }
+              //Code that runs if the user is not unique
+              this.setNotUniqueInfo(fingerprint, firestore)
           })
         })
       })
     })
+  }
+
+  submitNameChange(){
+    this.firestore.collection('scan-logs').doc(this.userFingerprint).set({
+      name: this.changeNameValue,
+      location: this.existingUserlocation,
+      timestamp: this.existingUserTimestamp,
+      fingerprint: this.userFingerprint,
+      exactLocation: this.existingUserExactLocation,
+      message: this.existingUserMessage
+    })
+  }
+
+  submitMessageChange(){
+    this.firestore.collection('scan-logs').doc(this.userFingerprint).set({
+      name: this.changeNameValue,
+      location: this.existingUserlocation,
+      timestamp: this.existingUserTimestamp,
+      fingerprint: this.userFingerprint,
+      exactLocation: this.existingUserExactLocation,
+      message: this.existingUserMessage
+    })
+  }
+
+  setNotUniqueInfo(fingerprint: any, firestore: AngularFirestore) {
+    //Use the finger print to find the user name
+    let documentRef = firestore.collection('scan-logs').doc(fingerprint);
+    let data = documentRef.valueChanges();
+
+    data.subscribe((output:any) => {
+      console.log(output)
+      this.changeNameValue = output.name
+      this.existingUserExactLocation = output.exactLocation
+      this.existingUserlocation = output.location
+      this.existingUserName = output.name
+      this.existingUserTimestamp = output.timestamp
+      this.existingUserMessage = output.message
+    });
   }
 
   writeFirstTimeUserLog(firestore: AngularFirestore, ip: any) {
@@ -54,13 +101,14 @@ export class AppComponent {
         this.checkIfAppHasBrowserLocationAccess().then(hasBrowserLocationAccess => {
           console.log("browser location access: " + hasBrowserLocationAccess)
           if (hasBrowserLocationAccess) {
-            this.getBrowserLocation().then(exactAddress=>{
+            this.getBrowserLocation().then(exactAddress => {
               firestore.collection('scan-logs').doc(this.userFingerprint).set({
                 name: this.generateAnonymousUserName(),
                 location: exactAddress,
                 timestamp: currentTime,
                 fingerprint: this.userFingerprint,
-                exactLocation: hasBrowserLocationAccess
+                exactLocation: hasBrowserLocationAccess,
+                message: ""
               })
             })
           }
@@ -70,7 +118,8 @@ export class AppComponent {
               location: roughLocation,
               timestamp: currentTime,
               fingerprint: this.userFingerprint,
-              exactLocation: hasBrowserLocationAccess
+              exactLocation: hasBrowserLocationAccess,
+              message: ""
             })
           }
         })
@@ -99,20 +148,20 @@ export class AppComponent {
   }
 
 
-  getBrowserLocation(){
+  getBrowserLocation() {
     return new Promise(resolve => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(position => {
           let latitude = position.coords.latitude;
           let longitude = position.coords.longitude;
-  
+
           fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`)
-          .then(response => response.json())
-          .then(data => {
-            const address = data.address.road + ", " + data.address.town + ", " + data.address.state;
-            this.displayedLocation = address
-            resolve(address)
-          })
+            .then(response => response.json())
+            .then(data => {
+              const address = data.address.road + ", " + data.address.town + ", " + data.address.state;
+              this.displayedLocation = address
+              resolve(address)
+            })
         });
       } else {
         console.error('Geolocation is not supported by this browser.');
@@ -181,7 +230,9 @@ export class AppComponent {
   }
 
   generateAnonymousUserName() {
-    return "Anonymous" + Math.floor(Math.random() * 100000);
+    let name = "Anonymous" + Math.floor(Math.random() * 100000)
+    this.changeNameValue = name
+    return name;
   }
 
   getUserHardwareConcurrency() {
